@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-bg: #0B0B0F;
+  --primary-green: #00FF85;
+  --secondary-green: #00FFA3;
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --text-primary: #E6EEF3;
+  --text-secondary: rgba(230, 238, 243, 0.7);
+  --error-color: #FF4D4F;
+  --success-color: #00E676;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--primary-bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.neon-glow {
+  box-shadow: 
+    0 0 20px rgba(0, 255, 133, 0.3),
+    0 0 40px rgba(0, 255, 133, 0.1);
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(0, 255, 133, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(0, 255, 133, 0.6);
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: var(--primary-green);
+  border-radius: 3px;
+}
+
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 255, 133, 0.1),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes loading {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 趋势相关的动画效果 */
+.trend-positive {
+  border: 1px solid rgba(0, 255, 133, 0.3);
+}
+
+.trend-negative {
+  border: 1px solid rgba(255, 77, 79, 0.3);
+}
+
+.trend-neutral {
+  border: 1px solid var(--glass-border);
+}
+
+/* 循环呼吸效果 */
+@keyframes breatheGreen {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(0, 255, 133, 0.3);
+  }
+  50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(0, 255, 133, 0.5);
+  }
+}
+
+@keyframes breatheRed {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(255, 77, 79, 0.3);
+  }
+  50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(255, 77, 79, 0.5);
+  }
+}
+
+.animate-breathe-green {
+  animation: breatheGreen 3s ease-in-out infinite;
+}
+
+.animate-breathe-red {
+  animation: breatheRed 3s ease-in-out infinite;
+}
+
+/* 渐变边框效果 */
+.gradient-border-green {
+  background: linear-gradient(var(--glass-bg), var(--glass-bg)) padding-box,
+              linear-gradient(45deg, rgba(0, 255, 133, 0.5), rgba(0, 255, 163, 0.5)) border-box;
+  border: 1px solid transparent;
+}
+
+.gradient-border-red {
+  background: linear-gradient(var(--glass-bg), var(--glass-bg)) padding-box,
+              linear-gradient(45deg, rgba(255, 77, 79, 0.5), rgba(255, 100, 100, 0.5)) border-box;
+  border: 1px solid transparent;
+}
+
+/* 基于趋势的hover特效 */
+.neon-glow-green {
+  box-shadow: 
+    0 0 20px rgba(0, 255, 133, 0.4),
+    0 0 40px rgba(0, 255, 133, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(0, 255, 133, 0.1) inset;
+}
+
+.neon-glow-red {
+  box-shadow: 
+    0 0 20px rgba(255, 77, 79, 0.4),
+    0 0 40px rgba(255, 77, 79, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 77, 79, 0.1) inset;
+}
+
+.loading-shimmer-green {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 255, 133, 0.15),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+.loading-shimmer-red {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 77, 79, 0.15),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
