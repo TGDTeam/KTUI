@@ -17,70 +17,33 @@
     </div>
 
     <div class="overflow-x-auto scrollbar-custom">
-      <table class="w-full min-w-[1200px]">
+      <table class="w-full min-w-[800px]">
         <thead>
           <tr class="border-b border-glass-border">
-            <th class="text-left py-4 px-3 text-text-secondary font-medium">时间段</th>
-            <th class="text-center py-4 px-3 text-text-secondary font-medium" colspan="4">空投任务</th>
-            <th class="text-center py-4 px-3 text-text-secondary font-medium" colspan="4">充值任务</th>
-          </tr>
-          <tr class="border-b border-glass-border/50">
-            <th class="py-3 px-3"></th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">总数</th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">成功</th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">失败</th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">成功率</th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">总数</th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">成功</th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">失败</th>
-            <th class="text-center py-3 px-3 text-text-secondary text-sm">成功率</th>
+            <th class="text-left py-4 px-3 text-text-secondary font-medium">统计类型</th>
+            <th 
+              v-for="hour in hours" 
+              :key="hour" 
+              class="text-center py-4 px-3 text-text-secondary font-medium text-sm"
+            >
+              {{ hour }}
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr 
-            v-for="(row, index) in sortedTableData" 
-            :key="row.hour"
+            v-for="stat in statsList" 
+            :key="stat.key"
             class="border-b border-glass-border/50 hover:bg-glass-bg/30 transition-colors"
-            :class="{ 'bg-primary-green/10': index === 0 && sortOrder === 'desc' }"
           >
-            <!-- 时间段 -->
-            <td class="py-4 px-3 font-mono text-sm font-medium">{{ row.hour }}</td>
-            
-            <!-- 空投任务数据 -->
-            <td class="py-4 px-3 text-center text-sm">{{ row.airdrop.total.toLocaleString() }}</td>
-            <td class="py-4 px-3 text-center text-sm text-primary-green">{{ row.airdrop.success.toLocaleString() }}</td>
-            <td class="py-4 px-3 text-center text-sm text-red-400">{{ row.airdrop.failed.toLocaleString() }}</td>
-            <!-- <td class="py-4 px-3 text-center">
-              <div class="flex items-center justify-center space-x-2">
-                <span class="text-sm" :class="getSuccessRateColor(row.airdrop.total, row.airdrop.success)">
-                  {{ calculateSuccessRate(row.airdrop.total, row.airdrop.success) }}%
-                </span>
-                <div class="w-12 bg-glass-bg rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    class="h-full bg-primary-green transition-all duration-300"
-                    :style="{ width: calculateSuccessRate(row.airdrop.total, row.airdrop.success) + '%' }"
-                  ></div>
-                </div>
-              </div>
-            </td> -->
-            
-            <!-- 充值任务数据 -->
-            <td class="py-4 px-3 text-center text-sm">{{ row.charge.total.toLocaleString() }}</td>
-            <td class="py-4 px-3 text-center text-sm text-primary-green">{{ row.charge.success.toLocaleString() }}</td>
-            <td class="py-4 px-3 text-center text-sm text-red-400">{{ row.charge.failed.toLocaleString() }}</td>
-            <!-- <td class="py-4 px-3 text-center">
-              <div class="flex items-center justify-center space-x-2">
-                <span class="text-sm" :class="getSuccessRateColor(row.charge.total, row.charge.success)">
-                  {{ calculateSuccessRate(row.charge.total, row.charge.success) }}%
-                </span>
-                <div class="w-12 bg-glass-bg rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    class="h-full bg-primary-green transition-all duration-300"
-                    :style="{ width: calculateSuccessRate(row.charge.total, row.charge.success) + '%' }"
-                  ></div>
-                </div>
-              </div>
-            </td> -->
+            <td class="py-3 px-3 font-medium text-sm">{{ stat.label }}</td>
+            <td 
+              v-for="(val, idx) in statsData[stat.key]" 
+              :key="stat.key + '-' + idx"
+              class="py-3 px-3 text-center text-sm"
+            >
+              {{ val.toLocaleString() }}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -89,91 +52,142 @@
 </template>
 
 <script setup lang="ts">
-interface HistoryData {
-  hour: string
-  airdrop: {
-    total: number
-    success: number
-    failed: number
-  }
-  charge: {
-    total: number
-    success: number
-    failed: number
-  }
-}
+import { ref, computed, onMounted } from 'vue'
 
 const props = defineProps<{
-  airdropData?: any[]
-  chargeData?: any[]
+  history?: {
+    hours: string[],
+    statsData: Record<string, number[]>
+  }
 }>()
 
 const updateTime = ref('')
 const sortOrder = ref<'asc' | 'desc'>('desc') // 默认最新在前
 
-// 生成表格数据
-const tableData = computed((): HistoryData[] => {
-  const data: HistoryData[] = []
+// 统计类型列表（行）
+const statsList = [
+  { key: 'received', label: '接收空投' },
+  { key: 'filtered', label: '过滤空投' },
+  { key: 'filteredAddress', label: '过滤地址' },
+  { key: 'duplicate', label: '重复空投' },
+  { key: 'retry', label: '重试空投' },
+  { key: 'total', label: '空投总数' },
+  { key: 'success', label: '空投成功' },
+  { key: 'failed', label: '空投失败' }
+] as const
+
+// 如果 props.history 可用，则直接使用；否则组件内部生成（保持原有行为）
+const hoursLatestFirst = computed(() => {
+  if (props.history && props.history.hours) {
+    // props.history.hours assumed oldest->newest or newest->old? 我们约定 props.hours 为 oldest->newest
+    return [...props.history.hours].reverse() // 保持与原组件“最新在前”的习惯
+  }
+
+  const arr: string[] = []
   const now = new Date()
-  
-  for (let i = 9; i >= 0; i--) {
-    const hour = new Date(now.getTime() - i * 60 * 60 * 1000)
-    const hourStr = hour.getHours().toString().padStart(2, '0') + ':00'
-    
-    // 模拟空投数据
-    const airdropVariance = 0.8 + Math.random() * 0.4
-    const airdropTotal = Math.floor(100 * airdropVariance / 10)
-    const airdropSuccessRate = 0.7 + Math.random() * 0.25
-    const airdropSuccess = Math.floor(airdropTotal * airdropSuccessRate)
-    
-    // 模拟充值数据
-    const chargeVariance = 0.8 + Math.random() * 0.4
-    const chargeTotal = Math.floor(24 * chargeVariance / 10)
-    const chargeSuccessRate = 0.85 + Math.random() * 0.1
-    const chargeSuccess = Math.floor(chargeTotal * chargeSuccessRate)
-    
-    data.push({
-      hour: hourStr,
-      airdrop: {
-        total: airdropTotal,
-        success: airdropSuccess,
-        failed: airdropTotal - airdropSuccess
-      },
-      charge: {
-        total: chargeTotal,
-        success: chargeSuccess,
-        failed: chargeTotal - chargeSuccess
-      }
-    })
+  for (let i = 0; i < 10; i++) {
+    const h = new Date(now.getTime() - i * 60 * 60 * 1000)
+    arr.push(h.getHours().toString().padStart(2, '0') + ':00')
   }
-  
-  return data
+  return arr
 })
 
-// 排序后的表格数据
-const sortedTableData = computed(() => {
-  const data = [...tableData.value]
-  
-  if (sortOrder.value === 'desc') {
-    // 最新时间在前（降序）
-    return data.sort((a, b) => b.hour.localeCompare(a.hour))
-  } else {
-    // 最旧时间在前（升序）
-    return data.sort((a, b) => a.hour.localeCompare(b.hour))
-  }
+const hours = computed(() => {
+  return sortOrder.value === 'desc' ? hoursLatestFirst.value : [...hoursLatestFirst.value].reverse()
 })
 
-const calculateSuccessRate = (total: number, success: number): number => {
-  if (total === 0) return 0
-  return +((success / total) * 100).toFixed(1)
-}
+const basePerHour = computed(() => {
+  // 如果有外部数据且包含 statsData，则不再生成随机
+  if (props.history && props.history.statsData) {
+    // props.history.statsData assumed to be oldest->newest; 需要返回 newest->oldest 与原逻辑一致
+    // 我们 reverse arrays to newest-first
+    const map = props.history.statsData
+    const len = map.total?.length || 10
+    const base: any[] = []
+    for (let i = 0; i < len; i++) {
+      const idx = (map.total.length - 1) - i
+      base.push({
+        total: map.total[idx] || 0,
+        success: map.success ? map.success[idx] || 0 : 0,
+        failed: map.failed ? map.failed[idx] || 0 : 0,
+        received: map.received ? map.received[idx] || 0 : 0,
+        filtered: map.filtered ? map.filtered[idx] || 0 : 0,
+        filteredAddress: map.filteredAddress ? map.filteredAddress[idx] || 0 : 0,
+        duplicate: map.duplicate ? map.duplicate[idx] || 0 : 0,
+        retry: map.retry ? map.retry[idx] || 0 : 0
+      })
+    }
+    return base
+  }
 
-const getSuccessRateColor = (total: number, success: number) => {
-  const rate = calculateSuccessRate(total, success)
-  if (rate >= 95) return 'text-primary-green'
-  if (rate >= 85) return 'text-yellow-400'
-  return 'text-red-400'
-}
+  // 生成每小时的基础数据（按最新->最旧顺序生成），保证 total = success + failed，其他项小于 total
+  const base: {
+    total: number
+    success: number
+    failed: number
+    received: number
+    filtered: number
+    filteredAddress: number
+    duplicate: number
+    retry: number
+  }[] = []
+
+  for (let i = 0; i < 10; i++) {
+    // 生成一个相对稳定的基数并加点随机
+    const baseScale = 50 + Math.floor(Math.random() * 150) // 50 ~ 199
+    const total = Math.max(0, baseScale)
+    const success = Math.floor(total * (0.7 + Math.random() * 0.25)) // 70% ~ 95%
+    const failed = total - success
+
+    const received = Math.min(total + Math.floor(Math.random() * 20), total + 20)
+    // 保证其他统计项不会超过 received 或 total
+    const filtered = Math.floor(received * (0.02 + Math.random() * 0.08)) // 2% ~ 10%
+    const filteredAddress = Math.floor(received * (0.0 + Math.random() * 0.03)) // 0% ~ 3%
+    const duplicate = Math.floor(received * (0.0 + Math.random() * 0.04)) // 0% ~ 4%
+    const retry = Math.floor(received * (0.0 + Math.random() * 0.03)) // 0% ~ 3%
+
+    base.push({ total, success, failed, received, filtered, filteredAddress, duplicate, retry })
+  }
+
+  // base currently newest->oldest (index 0 is最新)
+  return base
+})
+
+// 按照当前 hours 顺序，构建每个统计类型对应的数组（如果用户选择升序，返回的数据会反转）
+const statsData = computed(() => {
+  const dataMap: Record<string, number[]> = {
+    received: [],
+    filtered: [],
+    filteredAddress: [],
+    duplicate: [],
+    retry: [],
+    total: [],
+    success: [],
+    failed: []
+  }
+
+  const base = basePerHour.value
+
+  for (let i = 0; i < base.length; i++) {
+    const h = base[i]
+    dataMap.received.push(h.received)
+    dataMap.filtered.push(h.filtered)
+    dataMap.filteredAddress.push(h.filteredAddress)
+    dataMap.duplicate.push(h.duplicate)
+    dataMap.retry.push(h.retry)
+    dataMap.total.push(h.total)
+    dataMap.success.push(h.success)
+    dataMap.failed.push(h.failed)
+  }
+
+  if (sortOrder.value === 'asc') {
+    for (const k in dataMap) {
+      dataMap[k].reverse()
+    }
+  }
+
+  return dataMap
+})
 
 const toggleSortOrder = () => {
   sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'

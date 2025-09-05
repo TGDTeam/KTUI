@@ -22,6 +22,10 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="accounts.length === 0">
+            <td colspan="9" class="py-8 text-center text-text-secondary">暂无账号数据</td>
+          </tr>
+
           <tr 
             v-for="(account, index) in accounts" 
             :key="account.id"
@@ -65,6 +69,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import StatusBadge from './StatusBadge.vue'
+
 interface Account {
   id: string
   address: string
@@ -94,7 +101,7 @@ const columns = [
   { key: 'status', label: '当前状态' }
 ]
 
-const accounts = computed(() => props.accounts || mockAccounts)
+const accounts = computed(() => props.accounts || [])
 
 const activeAccounts = computed(() => 
   accounts.value.filter(acc => acc.status !== 'idle').length
@@ -114,31 +121,4 @@ const getStatusColor = (status: string) => {
   }
   return colors[status as keyof typeof colors] || 'bg-gray-500'
 }
-
-// 模拟数据
-const mockAccounts = ref<Account[]>([
-  {
-    id: '1',
-    address: '0x742d35Cc6634C0532925a3b8D097C25c',
-    nonce: 42,
-    balance: '2.5432',
-    chargeTime: 1250,
-    batchCount: 5,
-    successCount: 23,
-    failedCount: 1,
-    status: 'charging',
-    statusDetails: '正在充值 3 个地址'
-  },
-  {
-    id: '2',
-    address: '0x8ba1f109551bD432803012645Hac136c',
-    nonce: 38,
-    balance: '1.8765',
-    chargeTime: 980,
-    batchCount: 3,
-    successCount: 18,
-    failedCount: 0,
-    status: 'idle'
-  }
-])
 </script>

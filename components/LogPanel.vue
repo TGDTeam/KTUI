@@ -64,6 +64,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+
 interface LogEntry {
   id: string
   timestamp: string
@@ -71,35 +73,14 @@ interface LogEntry {
   message: string
 }
 
+const props = defineProps<{
+  initialLogs?: LogEntry[]
+}>()
+
 const selectedLevel = ref('ALL')
 const searchKeyword = ref('')
 
-const logs = ref<LogEntry[]>([
-  {
-    id: '1',
-    timestamp: '14:32:15',
-    level: 'INFO',
-    message: '任务开始: 收到 100 个空投任务'
-  },
-  {
-    id: '2',
-    timestamp: '14:32:16',
-    level: 'INFO',
-    message: '账号 0x742d...25c 开始充值，分配 10 个任务'
-  },
-  {
-    id: '3',
-    timestamp: '14:32:18',
-    level: 'WARN',
-    message: '账号 0x8ba1...36c Gas Price 过高: 120 Gwei'
-  },
-  {
-    id: '4',
-    timestamp: '14:32:20',
-    level: 'ERROR',
-    message: '交易失败: 0x1234...abcd insufficient funds'
-  }
-])
+const logs = ref<LogEntry[]>(props.initialLogs ? [...props.initialLogs] : [])
 
 const filteredLogs = computed(() => {
   let filtered = logs.value
@@ -115,7 +96,7 @@ const filteredLogs = computed(() => {
     )
   }
 
-  return filtered.slice(-100) // 只显示最近100条
+  return filtered.slice(-100)
 })
 
 const getLevelClass = (level: string) => {
@@ -145,9 +126,10 @@ const exportLogs = () => {
   URL.revokeObjectURL(url)
 }
 
-// 模拟实时日志更新
+let intervalId: number | null = null
+
 onMounted(() => {
-  const interval = setInterval(() => {
+  intervalId = window.setInterval(() => {
     const newLog: LogEntry = {
       id: Date.now().toString(),
       timestamp: new Date().toLocaleTimeString(),

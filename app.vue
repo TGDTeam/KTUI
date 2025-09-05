@@ -34,84 +34,68 @@
       <MetricsPanel :data="metricsData" />
 
       <!-- 历史数据表格 -->
-      <HistoryTable :airdropData="mockTaskData" :chargeData="mockBatchData" />
+      <HistoryTable :history="historyData" />
 
       <!-- 状态表格 -->
       <StatusTable :accounts="accountsData" class="mb-8" />
 
       <!-- 日志面板 -->
-      <LogPanel />
+      <LogPanel :initialLogs="logsData" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 响应式数据
+// filepath: c:\Users\Administrator\Desktop\KT\UI\app.vue
+import { ref, onMounted, onUnmounted } from 'vue'
+import MetricsPanel from './components/MetricsPanel.vue'
+import HistoryTable from './components/HistoryTable.vue'
+import StatusTable from './components/StatusTable.vue'
+import LogPanel from './components/LogPanel.vue'
+import { fetchMetrics, fetchAccounts, fetchHistory, fetchLogs } from './services/api'
+
+// 响应式数据（用 API 填充）
 const currentTime = ref('')
-const totalTasks = ref(100)
-const completedTasks = ref(67)
+const metricsData = ref<any>(null)
+const accountsData = ref<any[]>([])
+const historyData = ref<{ hours: string[], statsData: Record<string, number[]> } | null>(null)
+const logsData = ref<any[]>([])
 
-// 计算属性
-const progressPercentage = computed(() => 
-  totalTasks.value > 0 ? (completedTasks.value / totalTasks.value) * 100 : 0
-)
-
-// 模拟数据
-const metricsData = ref({
-  totalTasks: 100,
-  successTasks: 67,
-  failedTasks: 3,
-  totalGasFee: '2.456 ETH',
-  successBatches: 23,
-  failedBatches: 1,
-  chargeFee: '1.234 ETH'
-})
-
-const accountsData = ref([
-  {
-    id: '1',
-    address: '0x742d35Cc6634C0532925a3b8D097C25c',
-    nonce: 42,
-    balance: '2.5432',
-    chargeTime: 1250,
-    batchCount: 5,
-    successCount: 23,
-    failedCount: 1,
-    status: 'charging' as const,
-    statusDetails: '正在充值 3 个地址'
-  },
-  {
-    id: '2',
-    address: '0x8ba1f109551bD432803012645Hac136c',
-    nonce: 38,
-    balance: '1.8765',
-    chargeTime: 980,
-    batchCount: 3,
-    successCount: 18,
-    failedCount: 0,
-    status: 'idle' as const
-  }
-])
-
-// 模拟历史数据
-const mockTaskData = ref([])
-const mockBatchData = ref([])
+// 存储更新时间定时器 id 以便清理
+let timeIntervalId: number | null = null
 
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   // 更新时间
   const updateTime = () => {
     currentTime.value = new Date().toLocaleString('zh-CN')
   }
   updateTime()
-  setInterval(updateTime, 1000)
+  timeIntervalId = window.setInterval(updateTime, 1000)
 
-  // 模拟数据更新
-  setInterval(() => {
-    if (completedTasks.value < totalTasks.value) {
-      completedTasks.value += Math.floor(Math.random() * 3)
-    }
-  }, 2000)
+  // 异步拉取模拟后端数据
+  try {
+    const [metrics, accounts, history, logs] = await Promise.all([
+      fetchMetrics(),
+      fetchAccounts(),
+      fetchHistory(),
+      fetchLogs()
+    ])
+    metricsData.value = metrics
+    accountsData.value = accounts
+    historyData.value = history
+    logsData.value = logs
+  } catch (e) {
+    // 简短错误处理（可按需扩展）
+    console.error('fetch error', e)
+  }
+})
+
+onUnmounted(() => {
+  if (timeIntervalId !== null) {
+    clearInterval(timeIntervalId)
+    timeIntervalId = null
+  }
 })
 </script>
 
